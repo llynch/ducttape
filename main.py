@@ -55,6 +55,18 @@ COMMANDS = {
             "rmf": "docker network rm -f",
             "inspect": "docker network inspect {}"
         }),
+    "ds": ( "docker service ls | sed 1d", {'{id}': 0, '{}': 1, '{name}': 1, '{mode}': 2, '{replicas}': 3, '{image}': 4, '{ports}': 5},
+        {
+            "logs": "docker service logs -f --tail 100 {}",
+            "rm": "docker service rm",
+            "rmf": "docker service rm -f",
+            "inspect": "docker service inspect {}",
+            "scale0": "docker service scale -d {}=0",
+            "scale1": "docker service scale -d {}=1",
+            "stop": "docker service scale -d {}=0",
+            "start": "docker service scale -d {}=1",
+            "restart": "docker service scale -d {}=0; docker service scale -d {}=1"
+        }),
     # git
     "gb": ( "git branch -a | sed 's/[\* ]*//'", {'{}': 0},
         {
@@ -91,6 +103,10 @@ COMMANDS = {
             "start": "sudo service {} start",
             "stop": "sudo service {} stop"
         }),
+    "t": ( "tmux ls | sed 's/:/ /'", { '{}': 0 },
+       {
+           "a": "tmux attach -d -t {}"
+       })
 }
 
 def remove_empty(arr):
@@ -166,6 +182,8 @@ def main():
                 continue
 
             index = extractions[key]
+            if len(variables) <= index:
+                continue
             cmd = cmd.replace(key, ensureString(variables[index]))
 
         # if we had an alias than we happend the rest after the {}
