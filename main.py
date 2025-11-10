@@ -68,7 +68,7 @@ COMMANDS = {
             "restart": "docker service scale -d {}=0; docker service scale -d {}=1"
         }),
     # git
-    "gb": ( "git branch -a | sed 's/[\* ]*//'", {'{}': 0},
+    "gb": ( "git branch -a | sed 's/[\\* ]*//'", {'{}': 0},
         {
             "c": "git checkout {}",
             "co": "git checkout {}",
@@ -85,15 +85,16 @@ COMMANDS = {
             "k": "echo kubectl -n \"{namespace}\""
         }),
     # make
-    "m": ( "cat Makefile | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split($1,A,/ /);for(i in A)print A[i]}' | sort", {'{}':0},
+    "m": ( r"cat Makefile | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split($1,A,/ /);for(i in A)print A[i]}' | sort", {'{}':0},
         {
             "m": "make"
         }),
     # ps
-    "p": ( "ps -ef", {'{}': 1, '{user}': 0, '{pid}': 1, '{ppid}': 2, '{cmd}': slice(7, None)},
+    "p": ( "ps -ef", {'{}': 1, '{user}': 0, '{pid}': 1, '{ppid}': 2, '{cmd}': 7},
         {
-            "k" : "kill",
-            "k9": "kill -9"
+            "k" : "kill {}",
+            "kill" : "kill {}",
+            "k9": "kill -9 {}"
         }),
     # System V init scripts - services
     "s": ( "sudo service --status-all", {'{}': 3, '{status}': 1},
@@ -140,11 +141,17 @@ def main():
 
     # filter through fzf
     # TODO make the DUCTTAPE_FZF_OPTIONS env variable
-    result = subprocess.run('{} | fzf -m --height 40% --no-sort'.format(source_command), shell=True, stdout=subprocess.PIPE)
+    help_message = str([alias for alias in COMMANDS[source][2]])
+    result = subprocess.run('{} | fzf -m --height 40% --no-sort --header "{}"'.format(source_command, help_message), shell=True, stdout=subprocess.PIPE)
 
     # extract ids
     lines=result.stdout.decode().strip().split('\n')
-    r = re.compile('\s+')
+    lines = [line for line in lines if line]
+    if not lines:
+        return
+    print(lines)
+
+    r = re.compile('\\s+')
 
     #check against command aliases (only first argument for the command)
     cmd = ""
@@ -157,7 +164,8 @@ def main():
         # the " ".join is to support the splice() operation
         identifier = ensureString(variables[index])
 
-        alias = "echo"
+        # first command is the default
+        alias = list(COMMANDS[source][2])[0]
         if len(sys.argv) > 2:
             alias = sys.argv[2]
         aliases = COMMANDS[source][2]
