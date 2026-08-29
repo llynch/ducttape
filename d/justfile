@@ -1,0 +1,45 @@
+import '../lib/fzf.just'
+
+# private: raw container listing for fzf
+_ps:
+    @docker ps -a --format='table {{"{{"}}.ID{{"}}"}}\t{{"{{"}}.Names{{"}}"}}\t{{"{{"}}.Image{{"}}"}}\t{{"{{"}}.RunningFor{{"}}"}}\t{{"{{"}}.Status{{"}}"}}' | sed 1d | sort -k2
+
+# private: select container(s), print id + rest of columns
+_pick *flags:
+    @just _ps | just _fzf 'logs sh exec start stop inspect restart rm rmf' {{flags}}
+
+# tail logs of selected container(s)
+logs:
+    @just _pick | while read -r id _; do docker logs -f --tail 100 "$id"; done
+
+# open a shell in the selected container
+sh:
+    @just _pick -1 | while read -r id _; do docker exec -it "$id" sh; done
+
+# run an arbitrary command in the selected container
+exec *cmd:
+    @just _pick -1 | while read -r id _; do docker exec -it "$id" {{cmd}}; done
+
+# start selected container(s)
+start:
+    @just _pick | while read -r id _; do docker start "$id"; done
+
+# stop selected container(s)
+stop:
+    @just _pick | while read -r id _; do docker stop "$id"; done
+
+# inspect selected container(s)
+inspect:
+    @just _pick | while read -r id _; do docker inspect "$id"; done
+
+# restart selected container(s)
+restart:
+    @just _pick | while read -r id _; do docker restart "$id"; done
+
+# remove selected container(s)
+rm:
+    @just _pick | while read -r id _; do docker rm "$id"; done
+
+# force-remove selected container(s)
+rmf:
+    @just _pick | while read -r id _; do docker rm -f "$id"; done
