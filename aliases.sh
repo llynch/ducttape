@@ -5,7 +5,7 @@ alias ducttape='python3 ${DUCTTAPE_DIR}/main.py'
 
 # aliases
 alias a='python3 ${DUCTTAPE_DIR}/main.py a'
-alias d='python3 ${DUCTTAPE_DIR}/main.py d'
+alias d='just --justfile ${DUCTTAPE_DIR}/justfile d'
 alias di='python3 ${DUCTTAPE_DIR}/main.py di'
 alias dn='python3 ${DUCTTAPE_DIR}/main.py dn'
 alias dv='python3 ${DUCTTAPE_DIR}/main.py dv'
