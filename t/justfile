@@ -1,0 +1,17 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw tmux session listing for fzf
+_ls:
+    @tmux ls | sed 's/:/ /'
+
+# private: select session(s)
+_pick *flags:
+    @just _ls | just _fzf 'a' {{flags}}
+
+# attach to the selected tmux session
+a:
+    @just _pick -1 | while read -r s _; do tmux attach -d -t "$s"; done

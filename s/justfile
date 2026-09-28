@@ -1,0 +1,29 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw SysV service listing for fzf (needs sudo)
+_ls:
+    @sudo service --status-all
+
+# private: select service(s), print status + name columns
+_pick *flags:
+    @just _ls | just _fzf 'restart status start stop' {{flags}}
+
+# restart selected service(s)
+restart:
+    @just _pick | while read -r _ _ _ name _; do sudo service "$name" restart; done
+
+# show status of selected service(s)
+status:
+    @just _pick | while read -r _ _ _ name _; do sudo service "$name" status; done
+
+# start selected service(s)
+start:
+    @just _pick | while read -r _ _ _ name _; do sudo service "$name" start; done
+
+# stop selected service(s)
+stop:
+    @just _pick | while read -r _ _ _ name _; do sudo service "$name" stop; done

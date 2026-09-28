@@ -1,0 +1,20 @@
+import '../lib/fzf.just'
+
+# the directory the user invoked ducttape from (module recipes run in m/)
+dir := invocation_directory()
+
+# show available recipes
+default:
+    @just --list
+
+# private: Makefile targets from the caller's directory
+_ls d:
+    @cd '{{d}}' && awk -F':' '/^[a-zA-Z0-9][^$#\/\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}' Makefile | sort
+
+# private: select target(s) from the caller's Makefile
+_pick d *flags:
+    @just _ls '{{d}}' | just _fzf 'm' {{flags}}
+
+# run the selected make target(s)
+m:
+    @just _pick '{{dir}}' | while read -r t _; do (cd '{{dir}}' && make "$t"); done

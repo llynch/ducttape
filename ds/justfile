@@ -1,0 +1,49 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw service listing for fzf (explicit format: id + name first, version-stable)
+_ls:
+    @docker service ls --format='table {{"{{"}}.ID{{"}}"}}\t{{"{{"}}.Name{{"}}"}}\t{{"{{"}}.Mode{{"}}"}}\t{{"{{"}}.Replicas{{"}}"}}\t{{"{{"}}.Image{{"}}"}}\t{{"{{"}}.Ports{{"}}"}}' | sed 1d
+
+# private: select service(s), print id + name + mode + replicas + image + ports
+_pick *flags:
+    @just _ls | just _fzf 'logs rm rmf inspect scale0 scale1 start stop restart' {{flags}}
+
+# tail logs of selected service(s)
+logs:
+    @just _pick | while read -r _ name _; do docker service logs -f --tail 100 "$name"; done
+
+# remove selected service(s)
+rm:
+    @just _pick | while read -r _ name _; do docker service rm "$name"; done
+
+# force-remove selected service(s)
+rmf:
+    @just _pick | while read -r _ name _; do docker service rm -f "$name"; done
+
+# inspect selected service(s)
+inspect:
+    @just _pick | while read -r _ name _; do docker service inspect "$name"; done
+
+# scale selected service(s) to 0 replicas
+scale0:
+    @just _pick | while read -r _ name _; do docker service scale -d "$name"=0; done
+
+# scale selected service(s) to 1 replica
+scale1:
+    @just _pick | while read -r _ name _; do docker service scale -d "$name"=1; done
+
+# start selected service(s) (scale to 1)
+start:
+    @just _pick | while read -r _ name _; do docker service scale -d "$name"=1; done
+
+# stop selected service(s) (scale to 0)
+stop:
+    @just _pick | while read -r _ name _; do docker service scale -d "$name"=0; done
+
+# restart selected service(s) (scale to 0 then 1)
+restart:
+    @just _pick | while read -r _ name _; do docker service scale -d "$name"=0; docker service scale -d "$name"=1; done

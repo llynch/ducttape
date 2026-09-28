@@ -1,0 +1,25 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw process listing for fzf
+_ls:
+    @ps -ef | sed 1d
+
+# private: select process(es), print uid + pid + ppid + ... columns
+_pick *flags:
+    @just _ls | just _fzf 'k kill k9' {{flags}}
+
+# kill selected process(es)
+k:
+    @just _pick | while read -r _ pid _; do kill "$pid"; done
+
+# kill selected process(es)
+kill:
+    @just _pick | while read -r _ pid _; do kill "$pid"; done
+
+# force-kill (SIGKILL) selected process(es)
+k9:
+    @just _pick | while read -r _ pid _; do kill -9 "$pid"; done

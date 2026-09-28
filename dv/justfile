@@ -1,0 +1,25 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw volume listing for fzf (explicit format: name first, version-stable)
+_ls:
+    @docker volume ls --format='table {{"{{"}}.Name{{"}}"}}\t{{"{{"}}.Driver{{"}}"}}' | sed 1d
+
+# private: select volume(s), print name + driver columns
+_pick *flags:
+    @just _ls | just _fzf 'rm rmf inspect' {{flags}}
+
+# remove selected volume(s)
+rm:
+    @just _pick | while read -r name _; do docker volume rm "$name"; done
+
+# force-remove selected volume(s)
+rmf:
+    @just _pick | while read -r name _; do docker volume rm -f "$name"; done
+
+# inspect selected volume(s)
+inspect:
+    @just _pick | while read -r name _; do docker volume inspect "$name"; done

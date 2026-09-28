@@ -1,0 +1,25 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw network listing for fzf (explicit format: id first, version-stable)
+_ls:
+    @docker network ls --format='table {{"{{"}}.ID{{"}}"}}\t{{"{{"}}.Name{{"}}"}}\t{{"{{"}}.Driver{{"}}"}}\t{{"{{"}}.Scope{{"}}"}}' | sed 1d
+
+# private: select network(s), print id + name + driver + scope columns
+_pick *flags:
+    @just _ls | just _fzf 'rm rmf inspect' {{flags}}
+
+# remove selected network(s)
+rm:
+    @just _pick | while read -r id _; do docker network rm "$id"; done
+
+# force-remove selected network(s)
+rmf:
+    @just _pick | while read -r id _; do docker network rm -f "$id"; done
+
+# inspect selected network(s)
+inspect:
+    @just _pick | while read -r id _; do docker network inspect "$id"; done

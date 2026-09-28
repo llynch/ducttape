@@ -1,0 +1,36 @@
+import '../lib/fzf.just'
+
+# the directory the user invoked ducttape from (module recipes run in gb/)
+dir := invocation_directory()
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw branch listing for fzf, from the caller's repo
+_ls d:
+    @cd '{{d}}' && git branch -a | sed 's/[\* ]*//'
+
+# private: select branch(es) from the caller's repo
+_pick d *flags:
+    @just _ls '{{d}}' | just _fzf 'c co track lg diff' {{flags}}
+
+# checkout selected branch
+c:
+    @just _pick '{{dir}}' -1 | while read -r b _; do (cd '{{dir}}' && git checkout "$b"); done
+
+# checkout selected branch
+co:
+    @just _pick '{{dir}}' -1 | while read -r b _; do (cd '{{dir}}' && git checkout "$b"); done
+
+# checkout selected branch as a tracking branch
+track:
+    @just _pick '{{dir}}' -1 | while read -r b _; do (cd '{{dir}}' && git checkout --track "$b"); done
+
+# git lg the selected branch(es)
+lg:
+    @just _pick '{{dir}}' | while read -r b _; do (cd '{{dir}}' && git lg "$b"); done
+
+# diff against the selected branch(es)
+diff:
+    @just _pick '{{dir}}' | while read -r b _; do (cd '{{dir}}' && git diff "$b"); done

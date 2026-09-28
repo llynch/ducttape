@@ -1,0 +1,29 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw apt package listing for fzf
+_ls:
+    @apt list | sed 's_/_ _'
+
+# private: select package(s), print name + install status + description
+_pick *flags:
+    @just _ls | just _fzf 'i install r remove' {{flags}}
+
+# install selected package(s)
+i:
+    @just _pick | while read -r pkg _; do sudo apt install "$pkg"; done
+
+# install selected package(s)
+install:
+    @just _pick | while read -r pkg _; do sudo apt install "$pkg"; done
+
+# remove selected package(s)
+r:
+    @just _pick | while read -r pkg _; do sudo apt remove "$pkg"; done
+
+# remove selected package(s)
+remove:
+    @just _pick | while read -r pkg _; do sudo apt remove "$pkg"; done

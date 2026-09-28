@@ -1,5 +1,9 @@
 import '../lib/fzf.just'
 
+# show available recipes
+default:
+    @just --list
+
 # private: raw container listing for fzf
 _ps:
     @docker ps -a --format='table {{"{{"}}.ID{{"}}"}}\t{{"{{"}}.Names{{"}}"}}\t{{"{{"}}.Image{{"}}"}}\t{{"{{"}}.RunningFor{{"}}"}}\t{{"{{"}}.Status{{"}}"}}' | sed 1d | sort -k2

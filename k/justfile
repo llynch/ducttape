@@ -1,0 +1,29 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw pod listing (all namespaces) for fzf
+_ls:
+    @kubectl get --all-namespaces pods | sed 1d
+
+# private: select pod(s), print namespace + name + ... columns
+_pick *flags:
+    @just _ls | just _fzf 'logs logs0 exec k' {{flags}}
+
+# tail logs of selected pod(s)
+logs:
+    @just _pick | while read -r ns pod _; do kubectl logs -n "$ns" --tail 100 -f "$pod"; done
+
+# follow logs of selected pod(s) from now on
+logs0:
+    @just _pick | while read -r ns pod _; do kubectl logs -n "$ns" --tail 0 -f "$pod"; done
+
+# run an arbitrary command in the selected pod
+exec *cmd:
+    @just _pick -1 | while read -r ns pod _; do kubectl -n "$ns" exec -it "$pod" -- {{cmd}}; done
+
+# print the kubectl invocation for the selected pod(s)
+k:
+    @just _pick | while read -r ns pod _; do echo kubectl -n "$ns" "$pod"; done

@@ -1,0 +1,21 @@
+import '../lib/fzf.just'
+
+# show available recipes
+default:
+    @just --list
+
+# private: raw image listing for fzf (explicit format: id first, version-stable)
+_ls:
+    @docker image ls --format='table {{"{{"}}.ID{{"}}"}}\t{{"{{"}}.Repository{{"}}"}}\t{{"{{"}}.Tag{{"}}"}}\t{{"{{"}}.Size{{"}}"}}' | sed 1d
+
+# private: select image(s), print id + repository + tag + size columns
+_pick *flags:
+    @just _ls | just _fzf 'rm rmf' {{flags}}
+
+# remove selected image(s)
+rm:
+    @just _pick | while read -r id _; do docker image rm "$id"; done
+
+# force-remove selected image(s)
+rmf:
+    @just _pick | while read -r id _; do docker image rm -f "$id"; done
